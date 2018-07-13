@@ -63,6 +63,7 @@ run() {
   set +E
   set +T
   if [ "$BATS_INTERACTIVE" != "" ]; then
+    shopt -s -o pipefail
     "$@" 2>&1 | tee "$BATS_OUT"
     status="$?"
     output="$(cat $BATS_OUT)"
