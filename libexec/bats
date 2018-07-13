@@ -2,12 +2,12 @@
 set -e
 
 version() {
-  echo "Bats 0.4.0"
+  echo "Bats 0.4.1"
 }
 
 usage() {
   version
-  echo "Usage: bats [-c] [-p | -t] <test> [<test> ...]"
+  echo "Usage: bats [-c] [-p | -t | -i] <test> [<test> ...]"
 }
 
 help() {
@@ -16,13 +16,14 @@ help() {
   echo "  <test> is the path to a Bats test file, or the path to a directory"
   echo "  containing Bats test files."
   echo
-  echo "  -c, --count    Count the number of test cases without running any tests"
-  echo "  -h, --help     Display this help message"
-  echo "  -p, --pretty   Show results in pretty format (default for terminals)"
-  echo "  -t, --tap      Show results in TAP format"
-  echo "  -v, --version  Display the version number"
+  echo "  -c, --count        Count the number of test cases without running any tests"
+  echo "  -h, --help         Display this help message"
+  echo "  -p, --pretty       Show results in pretty format (default for terminals)"
+  echo "  -t, --tap          Show results in TAP format"
+  echo "  -i, --interactive  Show results in TAP format with interactive commands output"
+  echo "  -v, --version      Display the version number"
   echo
-  echo "  For more information, see https://github.com/sstephenson/bats"
+  echo "  For more information, see https://github.com/docksal/bats"
   echo
 }
 
@@ -76,7 +77,7 @@ for arg in "$@"; do
   fi
 done
 
-unset count_flag pretty
+unset count_flag pretty interactive_flag
 [ -t 0 ] && [ -t 1 ] && pretty="1"
 [ -n "$CI" ] && pretty=""
 
@@ -94,6 +95,10 @@ for option in "${options[@]}"; do
     count_flag="-c"
     ;;
   "t" | "tap" )
+    pretty=""
+    ;;
+  "i" | "interactive" )
+    interactive_flag="-i"
     pretty=""
     ;;
   "p" | "pretty" )
@@ -139,4 +144,4 @@ else
 fi
 
 set -o pipefail execfail
-exec "$command" $count_flag $extended_syntax_flag "${filenames[@]}" | "$formatter"
+exec "$command" $count_flag $interactive_flag $extended_syntax_flag "${filenames[@]}" | "$formatter"

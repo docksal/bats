@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -e
 set -E
 set -T
@@ -6,6 +7,12 @@ set -T
 BATS_COUNT_ONLY=""
 if [ "$1" = "-c" ]; then
   BATS_COUNT_ONLY=1
+  shift
+fi
+
+BATS_INTERACTIVE=""
+if [ "$1" = "-i" ]; then
+  BATS_INTERACTIVE="$1"
   shift
 fi
 
@@ -55,8 +62,14 @@ run() {
   set +e
   set +E
   set +T
-  output="$("$@" 2>&1)"
-  status="$?"
+  if [ "$BATS_INTERACTIVE" != "" ]; then
+    "$@" 2>&1 | tee "$BATS_OUT"
+    status="$?"
+    output="$(cat /tmp/.bats_output)"
+  else
+    output="$("$@" 2>&1)"
+    status="$?"
+  fi
   oldIFS=$IFS
   IFS=$'\n' lines=($output)
   [ -z "$e" ] || set -e
@@ -272,7 +285,7 @@ bats_perform_tests() {
   test_number=1
   status=0
   for test_name in "$@"; do
-    "$0" $BATS_EXTENDED_SYNTAX "$BATS_TEST_FILENAME" "$test_name" "$test_number" || status=1
+    "$0" $BATS_INTERACTIVE $BATS_EXTENDED_SYNTAX "$BATS_TEST_FILENAME" "$test_name" "$test_number" || status=1
     let test_number+=1
   done
   exit "$status"
@@ -292,7 +305,11 @@ bats_perform_test() {
     trap "bats_debug_trap \"\$BASH_SOURCE\"" debug
     trap "bats_error_trap" err
     trap "bats_teardown_trap" exit
-    "$BATS_TEST_NAME" >>"$BATS_OUT" 2>&1
+    if [ "$BATS_INTERACTIVE" != "" ]; then
+      "$BATS_TEST_NAME"
+    else
+      "$BATS_TEST_NAME" >>"$BATS_OUT" 2>&1
+    fi
     BATS_TEST_COMPLETED=1
 
   else
